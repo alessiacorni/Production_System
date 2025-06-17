@@ -36,14 +36,15 @@ class Job:
             with server.request() as request:
                 queue_entry_time = self.env.now
 
-                print("PRODUCT {} of family {}: Waiting for the machine {} to become available".format(self.idx, self.family, server.name))
+                # print("PRODUCT {} of family {}: Waiting for the machine {} to become available".format(self.idx, self.family, server.name))
                 yield request
-                print("PRODUCT {} of family {}: Machine {} ready".format(self.idx, self.family, server.name))
+                # print("PRODUCT {} of family {}: Machine {} ready".format(self.idx, self.family, server.name))
 
                 queue_exit_time = self.env.now
                 self.delay = queue_exit_time - queue_entry_time
 
-                print("PRODUCT {} of family {}: starting to be processed by the machine {}".format(self.idx, self.family, server.name))
+                # print("PRODUCT {} of family {}: starting to be processed by the machine {}".format(self.idx, self.family, server.name))
                 yield self.env.process(server.process_job(self))
-                print("PRODUCT {} of family {}: Machine {} process finished".format(self.idx, self.family, server.name))
-                self.done = True
+                # print("PRODUCT {} of family {}: Machine {} process finished".format(self.idx, self.family, server.name))
+
+        self.done = True
