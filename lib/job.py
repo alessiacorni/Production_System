@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 import statistics
 from collections import defaultdict
-from collections.abc import Generator, Iterable
+from collections.abc import Generator, Iterable, Callable
 from typing import Any, NoReturn
 
 import matplotlib.pyplot as plt
@@ -21,7 +21,8 @@ class Job:
         process_time: float,
         due_date: float,
         idx: int,
-        family: str
+        family: str,
+        completion_callback: Callable[[Job], None]
     ) -> None:
         self.env = env
         self.routing = routing
@@ -34,6 +35,8 @@ class Job:
         self.family = family
         self.completion_time: float | None = None
         self.time_in_system: float | None = None
+        self.is_late: bool = False
+        self.completion_callback = completion_callback
 
     def main(self) -> Generator[Request | Process, Any, None]:
         start_time_in_system = self.env.now
@@ -58,4 +61,9 @@ class Job:
 
         self.done = True
         self.completion_time = self.env.now
+        if self.completion_time > self.due_date:
+            self.is_late = True
+
         self.time_in_system = self.completion_time - start_time_in_system
+
+        self.completion_callback(self)
