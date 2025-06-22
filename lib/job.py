@@ -37,6 +37,8 @@ class Job:
         self.time_in_system: float | None = None
         self.is_late: bool = False
         self.completion_callback = completion_callback
+        self.earliness: float | None = None
+        self.tardiness: float | None = None
 
     def main(self) -> Generator[Request | Process, Any, None]:
         start_time_in_system = self.env.now
@@ -44,20 +46,12 @@ class Job:
             with server.request() as request:
                 queue_entry_time = self.env.now
 
-                # if self.family == "F3":
-                  #  print("PRODUCT {} of family {}: Waiting for the machine {} to become available".format(self.idx, self.family, server.name))
                 yield request
-                #if self.family == "F3":
-                 #   print("PRODUCT {} of family {}: Machine {} ready".format(self.idx, self.family, server.name))
 
                 queue_exit_time = self.env.now
                 self.delay = queue_exit_time - queue_entry_time
 
-                # if self.family == "F3":
-                  #  print("PRODUCT {} of family {}: starting to be processed by the machine {}".format(self.idx, self.family, server.name))
                 yield self.env.process(server.process_job(self))
-                # if self.family == "F3":
-                  #  print("PRODUCT {} of family {}: Machine {} process finished".format(self.idx, self.family, server.name))
 
         self.done = True
         self.completion_time = self.env.now
@@ -65,5 +59,6 @@ class Job:
             self.is_late = True
 
         self.time_in_system = self.completion_time - start_time_in_system
-
+        self.tardiness = max(0.0, self.completion_time - self.due_date)
+        self.earliness = - min(0.0, self.completion_time - self.due_date)
         self.completion_callback(self)
