@@ -62,7 +62,6 @@ class Server(simpy.Resource):
     def request(self, job: 'Job') -> Request:
         request = super().request()
         request.associated_job = job
-
         self._update_queue_history(None)
 
         request.callbacks.append(self._update_queue_history)

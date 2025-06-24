@@ -43,6 +43,7 @@ class Job:
 
     def main(self) -> Generator[Request | Process, Any, None]:
         start_time_in_system = self.env.now
+        self.in_system = True
         for server in self.routing:
             with server.request(self) as request:
                 queue_entry_time = self.env.now
