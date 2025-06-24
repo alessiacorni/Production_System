@@ -26,6 +26,8 @@ class Server(simpy.Resource):
         self.last_queue_level_timestamp: float = 0
 
         self.worked_time: float = 0
+        self.job_on_machine: 'Job' | None = None
+        self.job_start_time: float = 0.0
 
     @property
     def average_queue_length(self) -> float:
@@ -57,8 +59,10 @@ class Server(simpy.Resource):
         self.last_queue_level = len(self.queue)
         self._update_qt()
 
-    def request(self) -> Request:
+    def request(self, job: 'Job') -> Request:
         request = super().request()
+        request.associated_job = job
+
         self._update_queue_history(None)
 
         request.callbacks.append(self._update_queue_history)
@@ -70,7 +74,13 @@ class Server(simpy.Resource):
         return release
 
     def process_job(self, job: 'Job') -> Generator[Timeout, None, None]:
+        self.job_on_machine = job
+        self.job_start_time = self.env.now
+
         yield self.env.timeout(job.process_time)
+
+        self.job_on_machine = None
+        self.job_start_time = 0.0
         self.worked_time += job.process_time
 
     def plot_qt(self) -> None:

@@ -39,11 +39,12 @@ class Job:
         self.completion_callback = completion_callback
         self.earliness: float | None = None
         self.tardiness: float | None = None
+        self.in_system: bool = False # for the PSP version, to know if the job has been released in the system
 
     def main(self) -> Generator[Request | Process, Any, None]:
         start_time_in_system = self.env.now
         for server in self.routing:
-            with server.request() as request:
+            with server.request(self) as request:
                 queue_entry_time = self.env.now
 
                 yield request
