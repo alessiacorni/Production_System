@@ -1,16 +1,11 @@
 from __future__ import annotations
 
-import random
-import statistics
-from collections import defaultdict
-from collections.abc import Generator, Iterable, Callable
+from collections.abc import Generator, Callable
 from typing import Any, NoReturn
 
-import matplotlib.pyplot as plt
 import simpy
 from simpy import Process
-from simpy.events import Timeout
-from simpy.resources.resource import Release, Request
+from simpy.resources.resource import Request
 
 class Job:
     def __init__(
@@ -18,7 +13,7 @@ class Job:
         env : simpy.Environment,
         routing: list['Server'],
         arrival_time: float,
-        process_time: float,
+        process_times: list[float],
         due_date: float,
         idx: int,
         family: str,
@@ -27,7 +22,8 @@ class Job:
         self.env = env
         self.routing = routing
         self.arrival_time = arrival_time
-        self.process_time = process_time
+        self.process_times = process_times
+        self.current_process_time: float | None = None
         self.due_date = due_date
         self.idx = idx
         self.delay: float | None = None
@@ -44,9 +40,12 @@ class Job:
     def main(self) -> Generator[Request | Process, Any, None]:
         start_time_in_system = self.env.now
         self.in_system = True
-        for server in self.routing:
+        for i in range(len(self.routing)):
+            server = self.routing[i]
+            process_time = self.process_times[i]
             with server.request(self) as request:
                 queue_entry_time = self.env.now
+                self.current_process_time = process_time
 
                 yield request
 

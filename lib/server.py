@@ -76,11 +76,11 @@ class Server(simpy.Resource):
         self.job_on_machine = job
         self.job_start_time = self.env.now
 
-        yield self.env.timeout(job.process_time)
+        yield self.env.timeout(job.current_process_time)
 
         self.job_on_machine = None
         self.job_start_time = 0.0
-        self.worked_time += job.process_time
+        self.worked_time += job.current_process_time
 
     def plot_qt(self) -> None:
         x, y = zip(*self.qt)
