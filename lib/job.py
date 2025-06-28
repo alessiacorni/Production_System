@@ -23,6 +23,8 @@ class Job:
         self.routing = routing
         self.arrival_time = arrival_time
         self.process_times = process_times
+        self.current_step_index: int = 0
+        self.current_process_start_time: float | None = None
         self.current_process_time: float | None = None
         self.due_date = due_date
         self.idx = idx
@@ -37,24 +39,46 @@ class Job:
         self.tardiness: float | None = None
         self.in_system: bool = False # for the PSP version, to know if the job has been released in the system
 
+    @property
+    def total_processing_time(self) -> float:
+        return sum(self.process_times)
+
+    @property
+    def remaining_processing_time(self) -> float:
+        if self.done:
+            return 0.0
+
+        remaining = sum(self.process_times[self.current_step_index:])
+
+        if self.current_process_start_time is not None and self.current_step_index < len(self.process_times):
+            time_spent_in_current_step = self.env.now - self.current_process_start_time
+            remaining -= time_spent_in_current_step
+
+        return max(0.0, remaining)
+
     def main(self) -> Generator[Request | Process, Any, None]:
         start_time_in_system = self.env.now
         self.in_system = True
         for i in range(len(self.routing)):
+            self.current_step_index = i
             server = self.routing[i]
-            process_time = self.process_times[i]
+
             with server.request(self) as request:
                 queue_entry_time = self.env.now
-                self.current_process_time = process_time
+                self.current_process_time = self.process_times[i]
 
                 yield request
 
                 queue_exit_time = self.env.now
                 self.delay = queue_exit_time - queue_entry_time
 
+                self.current_process_start_time = self.env.now
                 yield self.env.process(server.process_job(self))
 
+                self.current_process_start_time = None
+
         self.done = True
+        self.in_system = False
         self.completion_time = self.env.now
         if self.completion_time > self.due_date:
             self.is_late = True
