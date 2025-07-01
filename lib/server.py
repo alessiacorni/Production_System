@@ -100,3 +100,16 @@ class Server(simpy.Resource):
         plt.xlabel("Simulation Time")
         plt.ylabel("Utilization rate")
         plt.show()
+
+    def current_workload(self) -> float:
+        workload = 0.0
+
+        if self.job_on_machine is not None:
+            time_spent_on_op = self.env.now - self.job_start_time
+            remaining_op_time = self.job_on_machine.current_process_time - time_spent_on_op
+            workload += max(0, remaining_op_time)
+
+        for request in self.queue:
+            workload += request.associated_job.current_process_time
+
+        return workload
