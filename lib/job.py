@@ -62,10 +62,10 @@ class Job:
         for i in range(len(self.routing)):
             self.current_step_index = i
             server = self.routing[i]
+            self.current_process_time = self.process_times[i]
 
             with server.request(self) as request:
                 queue_entry_time = self.env.now
-                self.current_process_time = self.process_times[i]
 
                 yield request
 
