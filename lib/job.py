@@ -33,7 +33,6 @@ class Job:
         self.family = family
         self.completion_time: float | None = None
         self.time_in_system: float | None = None
-        self.is_late: bool = False
         self.completion_callback = completion_callback
         self.earliness: float | None = None
         self.tardiness: float | None = None
@@ -80,8 +79,6 @@ class Job:
         self.done = True
         self.in_system = False
         self.completion_time = self.env.now
-        if self.completion_time > self.due_date:
-            self.is_late = True
 
         self.time_in_system = self.completion_time - start_time_in_system
         self.tardiness = max(0.0, self.completion_time - self.due_date)
